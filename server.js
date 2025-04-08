@@ -1,6 +1,12 @@
-const app = require('./app');
-const PORT = process.env.PORT || 3000;
+require('dotenv').config();
+const express = require('express');
+const uploadRoutes = require('./routes/uploadRoutes');
 
-app.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
+const app = express();
+
+app.use(express.json());
+app.use('/api', uploadRoutes);
+
+app.listen(3000, () => {
+  console.log('Servidor rodando na porta 3000');
 });
