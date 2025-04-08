@@ -1,6 +1,6 @@
 const express = require('express');
 const multer = require('multer');
-const { uploadImage } = require('../controllers/UploadController.js');
+const { uploadImage } = require('../controllers/uploadS3Controller.js');
 
 const router = express.Router();
 const storage = multer.memoryStorage();
