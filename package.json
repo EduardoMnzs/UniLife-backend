@@ -9,15 +9,17 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "1. [Introdução](#introdução)\r 2. [Requisitos](#requisitos)\r 3. [Instalação](#instalação)\r 4. [Configuração](#configuração)\r 5. [Uso](#uso)\r 6. [Estrutura do Projeto](#estrutura-do-projeto)\r 7. [Endpoints](#endpoints)\r 8. [Licença](#licença)",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.782.0",
     "aws-sdk": "^2.1692.0",
     "axios": "^1.8.4",
+    "bcryptjs": "^3.0.2",
     "body-parser": "^2.2.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.2",
     "multer-s3": "^3.0.1",
     "pg": "^8.14.1",
@@ -27,6 +29,15 @@
     "sqlite3": "^5.1.7"
   },
   "devDependencies": {
-    "nodemon": "^3.1.9"
-  }
+    "nodemon": "^3.1.9",
+    "sequelize-cli": "^6.6.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EduardoMnzs/UniLife-backend.git"
+  },
+  "bugs": {
+    "url": "https://github.com/EduardoMnzs/UniLife-backend/issues"
+  },
+  "homepage": "https://github.com/EduardoMnzs/UniLife-backend#readme"
 }

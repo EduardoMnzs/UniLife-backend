@@ -1,11 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const itemController = require('../controllers/itemController');
+const authMiddleware = require('../middlewares/authMiddleware');
+const roleMiddleware = require('../middlewares/roleMiddleware');
 
-router.post('/', itemController.create);
-router.get('/', itemController.getAll);
-router.get('/:id', itemController.getOne);
-router.put('/:id', itemController.update);
-router.delete('/:id', itemController.delete);
+router.post('/', authMiddleware, roleMiddleware(['admin']), itemController.create);
+router.get('/', authMiddleware, roleMiddleware(['admin']), itemController.getAll);
+router.get('/:id', authMiddleware, roleMiddleware(['admin']), itemController.getOne);
+router.put('/:id', authMiddleware, roleMiddleware(['admin']), itemController.update);
+router.delete('/:id', authMiddleware, roleMiddleware(['admin']), itemController.delete);
 
 module.exports = router;
