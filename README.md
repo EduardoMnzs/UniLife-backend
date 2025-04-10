@@ -14,11 +14,13 @@
 ## Introdução
 O backend do UniLife é responsável por gerenciar o banco de dados PostgreSQL e o serviço de armazenamento S3 da Amazon. Atualmente, os controllers implementados incluem o de itens e o de upload de imagens para o S3. 
 
-O único *model* existente no momento é o de `item`, que contém informações como título, categoria, descrição, imagem e pontos. Os endpoints da API estão organizados em rotas, oferecendo funcionalidades como:
+Os *models* atualmente disponíveis são `item` e `user`. O modelo `item` armazena informações como título, categoria, descrição, imagem e pontos, enquanto o modelo `user` contém dados como nome, email, senha e instituição. Os endpoints da API estão organizados em rotas, fornecendo funcionalidades específicas para cada recurso.
+
 - **POST** para upload de imagens no AWS S3.
 - Operações **CRUD** para o gerenciamento de itens.
+- **CRUD** para cadastro e autenticação de usuários.
 
-Além disso, há um *service* dedicado ao S3 para configurar e gerar URLs de acesso. 
+Além disso, há um *service* dedicado ao S3 para configurar e gerar URLs de acesso. A aplicação também conta com autenticação baseada em JWT (JSON Web Token). Ao realizar login, o backend gera um token que deve ser enviado pelo cliente em requisições protegidas, através do cabeçalho Authorization. Um middleware é responsável por validar esse token e garantir o acesso seguro às rotas privadas.
 
 A estrutura principal do backend inclui:
 - **app.js**: Centraliza os endpoints das APIs.
@@ -40,6 +42,7 @@ Para rodar o UniLife backend em Node.js, certifique-se de ter os seguintes pré-
 5. **Variáveis de ambiente**: Configure um arquivo `.env` com as seguintes informações:
     - Credenciais do banco de dados (host, usuário, senha).
     - Chaves de acesso da AWS (AWS_BUCKET_NAME, AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY).
+    - Chave de acesso JWT (JWT_SECRET).
 
 Certifique-se de que todos os serviços necessários estão configurados corretamente antes de iniciar a aplicação.
 
@@ -71,6 +74,9 @@ Para configurar o arquivo `.env`, siga os passos abaixo:
     Insira as seguintes variáveis no arquivo `.env`, substituindo os valores pelos dados apropriados para o seu ambiente:
 
     ```env
+    # Configurações da chave de acesso JWT
+    JWT_SECRET=sua_secret_key
+
     # Configurações do banco de dados
     DB_HOST=localhost
     DB_PORT=5432
@@ -123,22 +129,29 @@ UniLife-backend/
 ├── config/             
 │   ├── database.js
 │   └── s3.js
-├── controllers/        
+├── controllers/
+│   ├── adminController.js
+│   ├── authController.js
 │   ├── itemController.js
 │   └── uploadS3Controller.js
-├── models/             
-│   └── item.js
-├── routes/             
+├── middlewares/
+│   ├── authMiddleware.js
+│   └── roleMiddleware.js
+├── models/
+│   ├── item.js
+│   └── user.js
+├── routes/
+│   ├── authRoutes.js
 │   ├── itemRoutes.js
 │   └── uploadRoutes.js
-├── services/           
+├── services/
 │   └── s3Service.js
-├── .env               
-├── .gitignore     
-├── app.js              
-├── server.js           
-├── package.json        
-└── README.md           
+├── .env
+├── .gitignore
+├── app.js
+├── package.json
+├── README.md
+└── server.js
 ```
 
 Abaixo está uma descrição detalhada dos principais diretórios e arquivos do projeto:
@@ -150,20 +163,39 @@ Contém arquivos de configuração para o projeto:
 
 #### `controllers/`
 Contém a lógica de controle para as rotas:
-- **`itemController.js`**: Gerencia as operações relacionadas aos itens, como criação, leitura, atualização e exclusão.
-- **`uploadS3Controller.js`**: Gerencia o upload de arquivos para o S3.
+- **`adminController.js`**: Gerencia as operações administrativas, como a criação e gerenciamento de usuários com permissões especiais. Este controlador é responsável por funções que exigem privilégios administrativos, garantindo que apenas usuários autorizados possam realizar ações críticas no sistema.
+
+- **`authController.js`**: Gerencia as operações de autenticação e autorização de usuários. Este controlador é responsável por funções como registro de novos usuários, login, logout e renovação de tokens JWT. Ele também valida as credenciais fornecidas pelos usuários e gera tokens de acesso para autenticação em rotas protegidas.
+
+- **`itemController.js`**: Gerencia as operações relacionadas aos itens, como criação, leitura, atualização e exclusão. Algumas dessas operações, como a exclusão e atualização de itens, exigem permissões administrativas para garantir que apenas usuários autorizados possam realizar alterações críticas no sistema.
+
+- **`uploadS3Controller.js`**: Gerencia o upload de arquivos para o S3. Este controlador também requer permissões administrativas para realizar uploads, garantindo que apenas usuários com privilégios adequados possam acessar e modificar os recursos de armazenamento.
+
+#### `middlewares/`
+Contém os middlewares responsáveis por interceptar e processar requisições antes que elas cheguem aos controladores:
+
+- **`authMiddleware.js`**: Verifica se o token JWT fornecido na requisição é válido. Este middleware é essencial para proteger rotas privadas, garantindo que apenas usuários autenticados possam acessá-las.
+
+- **`roleMiddleware.js`**: Garante que o usuário tenha as permissões adequadas para acessar determinadas rotas ou realizar ações específicas. Ele verifica o papel (role) do usuário e bloqueia o acesso caso as permissões sejam insuficientes.
 
 #### `models/`
 Contém os modelos de dados usados no projeto:
 - **`item.js`**: Define o esquema e a estrutura do modelo de dados para os itens no banco de dados.
 
+- **`user.js`**: Define o esquema e a estrutura do modelo de dados para os usuários no banco de dados. Este modelo inclui campos como `nome`, `email`, `senha` e `instituição`. Ele também pode conter validações e métodos específicos para manipulação de dados relacionados aos usuários, como a criptografia de senhas antes de salvar no banco de dados.
+
 #### `routes/`
 Define as rotas da API:
-- **`itemRoutes.js`**: Contém as rotas relacionadas às operações com itens.
-- **`uploadRoutes.js`**: Contém as rotas relacionadas ao upload de arquivos.
+
+- **`authRoutes.js`**: Contém as rotas relacionadas à autenticação e autorização de usuários. Essas rotas incluem endpoints para registro de novos usuários, login, logout e renovação de tokens JWT. Elas são protegidas por middlewares que garantem a segurança e a validação das credenciais fornecidas.
+
+- **`itemRoutes.js`**: Contém as rotas relacionadas às operações com itens. Essas rotas permitem realizar operações **CRUD** (Criar, Ler, Atualizar e Deletar) para gerenciar os itens no sistema. Elas são protegidas por middlewares que garantem a autenticação e, em alguns casos, verificam as permissões administrativas necessárias para realizar determinadas ações.
+
+- **`uploadRoutes.js`**: Contém as rotas relacionadas ao upload de arquivos para o serviço S3 da AWS. Essas rotas permitem que os usuários enviem imagens ou outros arquivos, que serão armazenados no bucket configurado. Elas são protegidas por middlewares que garantem a autenticação e, em alguns casos, verificam as permissões administrativas necessárias para realizar uploads.
 
 #### `services/`
 Contém a lógica de serviços que pode ser reutilizada em diferentes partes do projeto:
+
 - **`s3Service.js`**: Implementa a lógica para interagir com o serviço S3 da AWS.
 
 #### Arquivos Principais
@@ -180,6 +212,7 @@ Essa estrutura modular facilita a manutenção e escalabilidade do projeto, sepa
 
 Abaixo estão listados os endpoints disponíveis na API:
 
+## `Itens`
 #### **GET /api/itens**
 - **Descrição**: Retorna uma lista de todos os itens cadastrados.
 - **Parâmetros**: Nenhum.
@@ -192,7 +225,10 @@ Abaixo estão listados os endpoints disponíveis na API:
             "categoria": "Categoria A",
             "descricao": "Descrição do item 1",
             "imagem": "url_da_imagem",
-            "pontos": 10,
+            "pontos": 0,
+            "estoqueAtual": 0,
+            "estoqueMinimo": 0,
+            "disponivel": false,
             "createdAt": "0000-00-00T00:00:00.000Z",
             "updatedAt": "0000-00-00T00:00:00.000Z"
         },
@@ -212,7 +248,10 @@ Abaixo estão listados os endpoints disponíveis na API:
         "categoria": "Categoria A",
         "descricao": "Descrição do item 1",
         "imagem": "url_da_imagem",
-        "pontos": 10,
+        "pontos": 0,
+        "estoqueAtual": 0,
+        "estoqueMinimo": 0,
+        "disponivel": false,
         "createdAt": "0000-00-00T00:00:00.000Z",
         "updatedAt": "0000-00-00T00:00:00.000Z"
     }
@@ -220,9 +259,14 @@ Abaixo estão listados os endpoints disponíveis na API:
 
 #### **POST /api/itens**
 - **Descrição**: Cria um novo item no banco de dados.
+- **Cabeçalhos**:
+    - `x-auth-token`: Token de autenticação JWT.
 - **Corpo da Requisição**:
     ```json
     {
+        "estoqueAtual": 10,
+        "estoqueMinimo": 0,
+        "disponivel": true,
         "titulo": "Novo Item",
         "categoria": "Categoria B",
         "descricao": "Descrição do novo item",
@@ -234,6 +278,9 @@ Abaixo estão listados os endpoints disponíveis na API:
     ```json
     {
         "id": 1,
+        "estoqueAtual": 10,
+        "estoqueMinimo": 0,
+        "disponivel": true,
         "titulo": "Item 1",
         "categoria": "Categoria A",
         "descricao": "Descrição do item 1",
@@ -248,9 +295,14 @@ Abaixo estão listados os endpoints disponíveis na API:
 - **Descrição**: Atualiza as informações de um item existente.
 - **Parâmetros**:
     - `id` (path): ID do item a ser atualizado.
+- **Cabeçalhos**:
+    - `x-auth-token`: Token de autenticação JWT.
 - **Corpo da Requisição**:
     ```json
     {
+        "estoqueAtual": 10,
+        "estoqueMinimo": 0,
+        "disponivel": true,
         "titulo": "Novo Item",
         "categoria": "Categoria B",
         "descricao": "Descrição do novo item",
@@ -262,6 +314,9 @@ Abaixo estão listados os endpoints disponíveis na API:
     ```json
     {
         "id": 1,
+        "estoqueAtual": 10,
+        "estoqueMinimo": 0,
+        "disponivel": true,
         "titulo": "Item 1",
         "categoria": "Categoria A",
         "descricao": "Descrição do item 1",
@@ -276,12 +331,37 @@ Abaixo estão listados os endpoints disponíveis na API:
 - **Descrição**: Remove um item do banco de dados.
 - **Parâmetros**:
     - `id` (path): ID do item a ser removido.
+- **Cabeçalhos**:
+    - `x-auth-token`: Token de autenticação JWT.
 - **Resposta**:
     ```json
     {
         "message": "Item deletado com sucesso"
     }
     ```
+
+## `S3 AWS`
+#### **POST /api/upload**
+- **Descrição**: Cria a imagem de um novo item no bucket da AWS.
+- **Parâmetros**: Nenhum.
+- **Cabeçalhos**:
+    - `x-auth-token`: Token de autenticação JWT.
+- **Corpo da Requisição**:
+    O corpo da requisição deve conter o arquivo a ser enviado no formato `multipart/form-data`:
+    ```json
+    {
+        "file": "arquivo_imagem"
+    }
+    ```
+- **Resposta**:
+    ```json
+    {
+        "message": "Upload bem-sucedido!",
+        "imageUrl": "https://unilife-app-imagens.s3.us-east-2.amazonaws.com/imagemenviada.png"
+    }
+    ```
+
+
 
 ## Conclusão
 
