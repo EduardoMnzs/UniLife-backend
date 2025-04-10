@@ -35,11 +35,17 @@ const User = sequelize.define('User', {
   },
   telefone: {
     type: DataTypes.STRING,
+    unique: true,
     allowNull: false
   },
   senha: {
     type: DataTypes.STRING,
     allowNull: false
+  },
+  ra: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    unique: true
   },
   role: {
     type: DataTypes.ENUM('admin', 'student'),
@@ -56,19 +62,59 @@ const User = sequelize.define('User', {
 }, {
   hooks: {
     beforeCreate: async (user) => {
+      if (user.instituicao.toLowerCase() === 'unimar' && user.role === 'student') {
+        if (!user.ra) {
+          throw new Error('RA é obrigatório para alunos da Unimar');
+        }
+        
+        const raRegex = /^\d{7,10}$/;
+        if (!raRegex.test(user.ra)) {
+          throw new Error('RA deve conter apenas números (7 a 10 dígitos)');
+        }
+      }
+      
+      if (user.instituicao.toLowerCase() !== 'unimar') {
+        user.ra = null;
+      }
+
       if (user.senha) {
         const salt = await bcrypt.genSalt(10);
         user.senha = await bcrypt.hash(user.senha, salt);
       }
+      
       if (user.instituicao.toLowerCase() === 'unimar') {
         user.senhaTemporaria = true;
       }
     },
     beforeUpdate: async (user) => {
+      if (user.changed('instituicao')) {
+        if (user.instituicao.toLowerCase() === 'unimar' && user.role === 'student' && !user.ra) {
+          throw new Error('RA é obrigatório para alunos da Unimar');
+        }
+      }
+      
+      if (user.instituicao.toLowerCase() === 'unimar' && user.role === 'student' && user.changed('ra')) {
+        if (!user.ra) {
+          throw new Error('RA é obrigatório para alunos da Unimar');
+        }
+        
+        const raRegex = /^\d{7,10}$/;
+        if (!raRegex.test(user.ra)) {
+          throw new Error('RA deve conter apenas números (7 a 10 dígitos)');
+        }
+      }
+      
       if (user.changed('senha')) {
         const salt = await bcrypt.genSalt(10);
         user.senha = await bcrypt.hash(user.senha, salt);
         user.senhaTemporaria = false;
+      }
+    }
+  },
+  validate: {
+    raRequiredForUnimar() {
+      if (this.instituicao.toLowerCase() === 'unimar' && this.role === 'student' && !this.ra) {
+        throw new Error('RA é obrigatório para alunos da Unimar');
       }
     }
   }

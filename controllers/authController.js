@@ -5,18 +5,37 @@ require('dotenv').config();
 const authController = {
   async register(req, res) {
     try {
-      const { nome, cpf, dataNascimento, instituicao, email, telefone, senha } = req.body;
+      const { nome, cpf, dataNascimento, instituicao, email, telefone, senha, ra } = req.body;
 
+      if (instituicao.toLowerCase() === 'unimar' && !ra) {
+        return res.status(400).json({ 
+          success: false,
+          message: 'RA é obrigatório para alunos da Unimar' 
+        });
+      }
+  
       const userExists = await User.findOne({ where: { email } });
       if (userExists) {
         return res.status(400).json({ message: 'Email já cadastrado' });
       }
-
+  
       const cpfExists = await User.findOne({ where: { cpf } });
       if (cpfExists) {
         return res.status(400).json({ message: 'CPF já cadastrado' });
       }
 
+      const telefoneExists = await User.findOne({ where: { telefone } });
+      if (telefoneExists) {
+        return res.status(400).json({ message: 'Telefone já cadastrado' });
+      }
+  
+      if (instituicao.toLowerCase() === 'unimar') {
+        const raExists = await User.findOne({ where: { ra } });
+        if (raExists) {
+          return res.status(400).json({ message: 'RA já cadastrado' });
+        }
+      }
+  
       const user = await User.create({
         nome,
         cpf,
@@ -24,7 +43,8 @@ const authController = {
         instituicao,
         email,
         telefone,
-        senha
+        senha,
+        ra: instituicao.toLowerCase() === 'unimar' ? ra : null
       });
 
       const token = jwt.sign(
@@ -41,6 +61,10 @@ const authController = {
         id: user.id,
         nome: user.nome,
         email: user.email,
+        cpf: user.cpf,
+        dataNascimento: user.dataNascimento,
+        telefone: user.telefone,
+        ra: user.ra,
         role: user.role,
         instituicao: user.instituicao,
         primeiroAcesso: user.primeiroAcesso,

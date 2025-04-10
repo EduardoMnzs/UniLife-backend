@@ -8,7 +8,8 @@
 5. [Uso](#uso)
 6. [Estrutura do Projeto](#estrutura-do-projeto)
 7. [Endpoints](#endpoints)
-8. [Licença](#licença)
+8. [Conclusão](#conclusão)
+9. [Licença](#licença)
 
 ## Introdução
 O backend do UniLife é responsável por gerenciar o banco de dados PostgreSQL e o serviço de armazenamento S3 da Amazon. Atualmente, os controllers implementados incluem o de itens e o de upload de imagens para o S3. 
