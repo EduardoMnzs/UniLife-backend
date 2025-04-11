@@ -259,6 +259,7 @@ Abaixo estão listados os endpoints disponíveis na API:
 
 #### **POST /api/itens**
 - **Descrição**: Cria um novo item no banco de dados.
+- **Parâmetros**: Nenhum.
 - **Cabeçalhos**:
     - `x-auth-token`: Token de autenticação JWT.
 - **Corpo da Requisição**:
@@ -361,15 +362,260 @@ Abaixo estão listados os endpoints disponíveis na API:
     }
     ```
 
+## `Users`
+#### **POST /api/auth/register**
+- **Descrição**: Cria um novo usúario no banco de dados.
+- **Parâmetros**: Nenhum.
+- **Corpo da Requisição**:
+    ```json
+    {
+        "nome": "Usuario",
+        "cpf": "00000000000",
+        "dataNascimento": "2024-04-01",
+        "instituicao": "Instituição",
+        "ra": "9999999",
+        "email": "usuario@email.com",
+        "telefone": "99999999999",
+        "senha": "senha"
+    }
+    ```
+- **Observação**: Se o aluno for da instituição `Unimar`, obrigatóriamente deve ser inserido o campo RA, caso contrário pode ser `null`.
 
+- **Resposta**:
+    ```json
+    {
+        "id": 1,
+        "nome": "Usuario",
+        "email": "usuario@email.com",
+        "cpf": "00000000000",
+        "dataNascimento": "2004-02-01",
+        "telefone": "14999999947",
+        "ra": null,
+        "role": "student",
+        "instituicao": "Instituição",
+        "primeiroAcesso": true,
+        "senhaTemporaria": true,
+        "token": "token JWT"
+    }
+    ```
+- **Observação**: Se o aluno for da instituição `Unimar`, a resposta para `primeiro acesso` e `senha temporaria` será `true`.
+
+#### **POST /api/auth/login**
+- **Descrição**: Realiza o login de um usuário no sistema, gerando um token JWT para autenticação em rotas protegidas.
+- **Parâmetros**: Nenhum.
+- **Corpo da Requisição**:
+    ```json
+    {
+        "email": "usuario@email.com",
+        "senha": "1234"
+    }
+    ```
+
+- **Resposta 1**:
+    ```json
+    {
+        "message": "Troca de senha necessária",
+        "token": "token JWT",
+        "primeiroAcesso": true,
+        "role": "student"
+    }
+    ```
+- **Observação**: Se o aluno for da instituição `Unimar` e for o primeiro acesso, a resposta retornará uma mensagem informando para trocar a senha.
+
+- **Resposta 2**:
+    ```json
+    {
+        "id": 1,
+        "nome": "Usuario",
+        "email": "usuario@email.com",
+        "role": "student",
+        "instituicao": "Instituição",
+        "primeiroAcesso": false,
+        "token": "Token JWT"
+    }
+    ```
+
+#### **PUT /api/auth/change-password**
+- **Descrição**: Atualiza a senha do usúario.
+- **Parâmetros**: Nenhum.
+- **Cabeçalhos**:
+    - `x-auth-token`: Token de autenticação JWT.
+- **Corpo da Requisição**:
+    ```json
+    {
+        "senhaAtual": "Senha",
+        "novaSenha": "Nova senha"
+    }
+    ```
+- **Resposta**:
+    ```json
+    {
+        "message": "Senha alterada com sucesso"
+    }
+    ```
+
+#### **GET /api/auth/me**
+- **Descrição**: Retorna as informações do usuário logado.
+- **Parâmetros**: Nenhum.
+- **Cabeçalhos**:
+    - `x-auth-token`: Token de autenticação JWT.
+- **Resposta**:
+    ```json
+    {
+        "id": 1,
+        "nome": "Usuario",
+        "cpf": "00000000000",
+        "dataNascimento": "2004-02-01",
+        "instituicao": "Instituição",
+        "email": "usuario@email.com",
+        "telefone": "14999999947",
+        "ra": null,
+        "role": "student",
+        "primeiroAcesso": false,
+        "senhaTemporaria": false,
+        "createdAt": "0000-00-00T00:00:00.000Z",
+        "updatedAt": "0000-00-00T00:00:00.000Z"
+    }
+    ```
+
+#### **DELETE /api/auth/delete-me**
+- **Descrição**: Remove um usúario do banco de dados.
+- **Parâmetros**: Nenhum.
+- **Cabeçalhos**:
+    - `x-auth-token`: Token de autenticação JWT.
+- **Resposta**:
+    ```json
+    {
+        "message": "Usuário deletado com sucesso"
+    }
+    ```
+
+## `Administrador`
+#### **GET /api/auth/admin/dashboard**
+- **Descrição**: Retorna as informações do usuário autenticado, juntamente com uma lista detalhada de outros usuários cadastrados no sistema.
+- **Parâmetros**: Nenhum.
+- **Cabeçalhos**:
+    - `x-auth-token`: Token de autenticação JWT.
+- **Resposta**:
+    ```json
+    {
+        "stats": {
+            "totalUsers": 1,
+            "totalAdmins": 1,
+            "totalStudents": 0
+        },
+        "latestUsers": [
+            {
+                "id": 1,
+                "nome": "Usuario",
+                "email": "usuario@email.com",
+                "role": "admin",
+                "createdAt": "0000-00-00T00:00:00.000Z",
+                "updatedAt": "0000-00-00T00:00:00.000Z"
+            }
+        ]
+    }
+    ```
+
+#### **GET /api/auth/admin/users**
+- **Descrição**: Retorna uma lista com as informações de todos os usuário cadastrados no sistema.
+- **Parâmetros**: Nenhum.
+- **Cabeçalhos**:
+    - `x-auth-token`: Token de autenticação JWT.
+- **Resposta**:
+    ```json
+    [
+        {
+            "id": 1,
+            "nome": "Usuario",
+            "cpf": "00000000000",
+            "dataNascimento": "2004-02-01",
+            "instituicao": "Instituição",
+            "email": "usuario@email.com",
+            "telefone": "99999999999",
+            "ra": null,
+            "role": "admin",
+            "primeiroAcesso": false,
+            "senhaTemporaria": false,
+            "createdAt": "0000-00-00T00:00:00.000Z",
+            "updatedAt": "0000-00-00T00:00:00.000Z"
+        },
+        ...
+    ]
+    ```
+
+#### **GET /api/auth/admin/users/:id**
+- **Descrição**: Retorna as informações de um usuário específico cadastrado no sistema.
+- **Parâmetros**:
+    - `id` (path): ID do usúario a ser buscado.
+- **Cabeçalhos**:
+    - `x-auth-token`: Token de autenticação JWT.
+- **Resposta**:
+    ```json
+    {
+        "id": 1,
+        "nome": "Usuario",
+        "cpf": "00000000000",
+        "dataNascimento": "2004-02-01",
+        "instituicao": "Instituição",
+        "email": "usuario@email.com",
+        "telefone": "99999999999",
+        "ra": null,
+        "role": "admin",
+        "primeiroAcesso": false,
+        "senhaTemporaria": false,
+        "createdAt": "0000-00-00T00:00:00.000Z",
+        "updatedAt": "0000-00-00T00:00:00.000Z"
+    }
+    ```
+
+#### **PUT /api/auth/admin/user/:id**
+- **Descrição**: Atualiza o nível de acesso do usúario.
+- **Parâmetros**:
+    - `id` (path): ID do usúario a ser buscado.
+- **Cabeçalhos**:
+    - `x-auth-token`: Token de autenticação JWT.
+- **Corpo da Requisição**:
+    ```json
+    {
+        "role": "admin"
+    }
+    ```
+- **Resposta**:
+    ```json
+    {
+        "message": "Usuário atualizado com sucesso",
+        "user": {
+            "id": 1,
+            "nome": "Usuario",
+            "email": "usuario@email.com",
+            "role": "admin"
+        }
+    }
+    ```
+
+#### **DELETE /api/auth/admin/users/:id**
+- **Descrição**: Remove um usúario do banco de dados.
+- **Parâmetros**:
+    - `id` (path): ID do usúario a ser buscado.
+- **Cabeçalhos**:
+    - `x-auth-token`: Token de autenticação JWT.
+- **Resposta**:
+    ```json
+    {
+        "message": "Usuário removido com sucesso"
+    }
+    ```
 
 ## Conclusão
 
-O backend do UniLife foi projetado para oferecer uma solução robusta e escalável, integrando banco de dados relacional e armazenamento em nuvem. Com uma arquitetura modular baseada no padrão MVC, o projeto é fácil de manter e expandir. 
+O backend do UniLife foi desenvolvido para ser uma solução robusta, escalável e de fácil manutenção, integrando tecnologias modernas como banco de dados PostgreSQL, armazenamento em nuvem com AWS S3 e autenticação segura baseada em JWT. Com uma arquitetura modular seguindo o padrão MVC, o projeto é altamente organizado, permitindo fácil expansão e personalização para atender às necessidades específicas de diferentes instituições ou usuários.
 
-Seguindo as instruções de configuração e uso, você poderá implementar e personalizar o sistema para atender às suas necessidades específicas. Caso tenha dúvidas ou sugestões, sinta-se à vontade para contribuir ou entrar em contato.
+A documentação detalhada e a estrutura clara do projeto garantem que desenvolvedores possam configurar, implementar e utilizar o sistema de forma eficiente. Além disso, a aplicação oferece funcionalidades essenciais, como operações CRUD para gerenciamento de itens e usuários, upload seguro de arquivos para a nuvem e autenticação com controle de acesso baseado em permissões.
 
-Obrigado por utilizar o UniLife!
+Seja para gerenciar recursos, integrar serviços ou oferecer uma experiência segura e confiável, o UniLife backend foi projetado para ser uma base sólida para aplicações modernas. Caso tenha dúvidas, sugestões ou melhorias, sinta-se à vontade para contribuir com o projeto ou entrar em contato com a equipe responsável.
+
+Obrigado por escolher o UniLife! Juntos, podemos construir soluções inovadoras para transformar a gestão acadêmica e administrativa.
 
 ## Licença
 
