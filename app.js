@@ -7,6 +7,7 @@ require('dotenv').config();
 const itemRoutes = require('./routes/itemRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const authRoutes = require('./routes/authRoutes');
+const pontosRoutes = require('./routes/pontosRoutes');
 
 const Item = require('./models/item');
 const User = require('./models/user');
@@ -20,6 +21,7 @@ app.use('/api/itens', itemRoutes);
 app.use('/api', uploadRoutes);
 
 app.use('/api/auth', authRoutes);
+app.use('/api/pontos', pontosRoutes);
 
 const syncDatabase = async () => {
     try {

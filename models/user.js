@@ -58,6 +58,11 @@ const User = sequelize.define('User', {
   senhaTemporaria: {
     type: DataTypes.BOOLEAN,
     defaultValue: false
+  },
+  pontos: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0
   }
 }, {
   hooks: {
