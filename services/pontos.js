@@ -1,35 +1,30 @@
 const sequelize = require('../config/database');
-const User = require('../models/user');
-const PointTransaction = require('../models/pontos');
+const { User, PointTransaction } = require('../models');
 
-async function concederPontos(userId, valor, descricao) {
+async function concederPontos(userId, valor, descricao, transacaoExistente = null) {
 
-    const t = await sequelize.transaction();
+    const t = transacaoExistente || (await sequelize.transaction());
 
     try {
         const user = await User.findByPk(userId, { transaction: t });
         if (!user) {
-            await t.rollback();
             throw new Error('Usuário não encontrado');
         }
-
-        const newTransaction = await PointTransaction.create({
-            userId,
-            valor,
-            descricao
-        }, { transaction: t });
-
+        await PointTransaction.create({ userId, valor, descricao }, { transaction: t });
         await user.increment('pontos', { by: valor, transaction: t });
-        await t.commit();
-        return newTransaction;
+
+        if (!transacaoExistente) {
+            await t.commit();
+        }
 
     } catch (error) {
-        if (t) await t.rollback();
-        console.error('Falha na transação de pontos:', error);
+        if (!transacaoExistente) {
+            await t.rollback();
+        }
         throw error;
     }
 }
 
 module.exports = {
-  concederPontos
+    concederPontos
 };
