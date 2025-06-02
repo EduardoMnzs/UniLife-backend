@@ -8,6 +8,7 @@ router.post('/:id/checkin', authMiddleware, eventoController.checkIn);
 router.post('/', authMiddleware, roleMiddleware(['admin']), eventoController.criarEvento);
 
 router.get('/', authMiddleware, eventoController.getEventos);
+router.get('/:id', authMiddleware, eventoController.getEventoId);
 
 router.put('/:id', authMiddleware, roleMiddleware(['admin']), eventoController.atualizarEvento);
 

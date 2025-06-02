@@ -50,6 +50,12 @@ async function getEventos(req, res) {
     }
 }
 
+async function getEventoId(req, res) {
+    const { id } = req.params;
+    const evento = await eventoService.listarEventoId(id);
+    return res.status(200).json(evento);
+}
+
 async function atualizarEvento(req, res) {
     const { id } = req.params;
     const dadosEvento = req.body;
@@ -63,4 +69,4 @@ async function deletarEvento(req, res) {
     return res.status(200).json({ message: 'Evento deletado com sucesso.' });
 }
 
-module.exports = { checkIn, getEventos, criarEvento, deletarEvento, atualizarEvento };
+module.exports = { checkIn, getEventos, getEventoId, criarEvento, deletarEvento, atualizarEvento };

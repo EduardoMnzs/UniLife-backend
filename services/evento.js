@@ -63,6 +63,10 @@ async function criarEvento(dadosEvento) {
     return await Evento.scope(null).create(dadosEvento);
 }
 
+async function listarEventoId(id) {
+    return await Evento.findByPk(id);
+}
+
 async function listarEventos() {
     return await Evento.findAll({
         where: {
@@ -85,4 +89,4 @@ async function deletarEvento(id) {
 }
 
 
-module.exports = { realizarCheckIn, criarEvento, listarEventos, deletarEvento, atualizarEvento };
+module.exports = { realizarCheckIn, criarEvento, listarEventoId, listarEventos, deletarEvento, atualizarEvento };
