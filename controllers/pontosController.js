@@ -1,22 +1,23 @@
-const PointService = require('../services/pontos');
+const pontosService = require('../services/pontos');
 
 async function grantPoints(req, res) {
-  const { userId, valor, descricao } = req.body;
-
-  if (!userId || !valor || !descricao) {
-    return res.status(400).json({ message: 'Campos userId, valor e descricao são obrigatórios.' });
-  }
-
   try {
-    const newTransaction = await PointService.concederPontos(userId, valor, descricao);
+    const { userId, valor, descricao } = req.body;
 
-    return res.status(201).json({ 
-        message: 'Pontos concedidos com sucesso!',
-        transaction: newTransaction
+    console.log(`[Controller] Iniciando a concessão de ${valor} pontos para o usuário de ID: ${userId}`);
+
+    const novaTransacaoDePonto = await pontosService.concederPontos(userId, valor, descricao);
+
+    console.log('[Controller] Serviço finalizado. Enviando resposta de sucesso.');
+
+    return res.status(201).json({
+      message: "Pontos concedidos com sucesso!",
+      transaction: novaTransacaoDePonto
     });
 
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    console.error("[Controller] Erro ao tentar conceder pontos:", error);
+    return res.status(500).json({ message: error.message || 'Erro interno do servidor.' });
   }
 }
 

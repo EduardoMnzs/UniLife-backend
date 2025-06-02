@@ -1,5 +1,5 @@
 const sequelize = require('../config/database');
-const { Evento, CheckIn } = require('../models'); 
+const { Evento, CheckIn } = require('../models');
 const { Op } = require('sequelize');
 const pontosService = require('./pontos');
 

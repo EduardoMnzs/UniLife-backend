@@ -1,4 +1,4 @@
-const eventoService = require('../services/evento');
+const { Evento } = require('../models');
 
 async function criarEvento(req, res) {
     const dadosDoEvento = req.body;

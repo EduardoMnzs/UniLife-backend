@@ -9,6 +9,7 @@ const uploadRoutes = require('./routes/uploadRoutes');
 const authRoutes = require('./routes/authRoutes');
 const pontosRoutes = require('./routes/pontosRoutes');
 const eventoRoutes = require('./routes/eventoRoutes');
+const produtoRoutes = require('./routes/produtoRoutes');
 
 const app = express();
 
@@ -21,6 +22,7 @@ app.use('/api', uploadRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/pontos', pontosRoutes);
 app.use('/api/eventos', eventoRoutes);
+app.use('/api/produtos', produtoRoutes);
 
 const syncDatabase = async () => {
     try {
