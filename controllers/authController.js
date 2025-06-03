@@ -1,3 +1,5 @@
+// controllers/authController.js
+
 const jwt = require('jsonwebtoken');
 const { User } = require('../models');
 require('dotenv').config();
@@ -51,7 +53,7 @@ const authController = {
         {
           id: user.id,
           email: user.email,
-          role: user.role || 'user'
+          role: user.role
         },
         process.env.JWT_SECRET,
         { expiresIn: '1d' }
@@ -72,7 +74,7 @@ const authController = {
         token
       });
     } catch (error) {
-      console.error(error);
+      console.error("Erro no registro:", error);
       res.status(500).json({ message: 'Erro no servidor' });
     }
   },
@@ -120,22 +122,26 @@ const authController = {
         token
       });
     } catch (error) {
-      console.error(error);
+      console.error("Erro no login:", error);
       res.status(500).json({ message: 'Erro no servidor' });
     }
   },
 
   async changePassword(req, res) {
     try {
-      const { senhaAtual, novaSenha } = req.body;
-      const userId = req.userId;
+      const { senhaAntiga, novaSenha } = req.body;
+      const userId = req.user.id; 
+
+      if (!senhaAntiga || !novaSenha) {
+        return res.status(400).json({ message: 'Senha atual e nova senha são obrigatórias.' });
+      }
 
       const user = await User.findByPk(userId);
       if (!user) {
         return res.status(404).json({ message: 'Usuário não encontrado' });
       }
 
-      const isValidPassword = await user.validPassword(senhaAtual);
+      const isValidPassword = await user.validPassword(senhaAntiga);
       if (!isValidPassword) {
         return res.status(401).json({ message: 'Senha atual incorreta' });
       }
@@ -144,14 +150,14 @@ const authController = {
 
       res.status(200).json({ message: 'Senha alterada com sucesso' });
     } catch (error) {
-      console.error(error);
+      console.error("Erro ao alterar senha:", error);
       res.status(500).json({ message: 'Erro no servidor' });
     }
   },
 
   async getMe(req, res) {
     try {
-      const user = await User.findByPk(req.userId, {
+      const user = await User.findByPk(req.user.id, {
         attributes: { exclude: ['senha'] }
       });
 
@@ -161,14 +167,14 @@ const authController = {
 
       res.status(200).json(user);
     } catch (error) {
-      console.error(error);
+      console.error("Erro em getMe:", error);
       res.status(500).json({ message: 'Erro no servidor' });
     }
   },
 
   async deleteMe(req, res) {
     try {
-      const userId = req.userId;
+      const userId = req.user.id; 
 
       const user = await User.findByPk(userId);
       if (!user) {
@@ -179,7 +185,7 @@ const authController = {
 
       res.status(200).json({ message: 'Usuário deletado com sucesso' });
     } catch (error) {
-      console.error(error);
+      console.error("Erro em deleteMe:", error);
       res.status(500).json({ message: 'Erro no servidor' });
     }
   },

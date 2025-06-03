@@ -1,5 +1,3 @@
-// services/pontos.service.js
-
 const { sequelize, User, PointTransaction } = require('../models');
 
 async function concederPontos(userId, valor, descricao, transacaoExistente = null) {
@@ -8,28 +6,22 @@ async function concederPontos(userId, valor, descricao, transacaoExistente = nul
 
   try {
     const user = await User.findByPk(userId, { transaction: t });
-
     if (!user) {
       throw new Error('Usuário não encontrado ao tentar conceder pontos.');
     }
 
-    await PointTransaction.create({ userId, valor, descricao }, { transaction: t });
+    const novaTransacaoDePonto = await PointTransaction.create({ userId, valor, descricao }, { transaction: t });
     await user.increment('pontos', { by: valor, transaction: t });
-    
-    console.log(`[PONTOS SERVICE] Operações no banco (create e increment) foram executadas para o usuário ${user.id}.`);
 
     if (!transacaoExistente) {
-      console.log('[PONTOS SERVICE] Esta é uma transação nova. EXECUTANDO COMMIT...');
       await t.commit();
-      console.log('[PONTOS SERVICE] COMMIT REALIZADO COM SUCESSO.');
-    } else {
-      console.log('[PONTOS SERVICE] Usando transação externa. O commit será feito pelo serviço principal (ex: resgate de produto).');
     }
-    
+
+    return novaTransacaoDePonto;
+
   } catch (error) {
     console.error('[PONTOS SERVICE] Ocorreu um erro dentro do try...catch:', error);
-    if (!transacaoExistente && t) {
-      console.log('[PONTOS SERVICE] ERRO: Executando rollback...');
+    if (!transacaoExistente && t && t.finished !== 'commit' && t.finished !== 'rollback') {
       await t.rollback();
     }
     throw error;

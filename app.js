@@ -30,7 +30,6 @@ const syncDatabase = async () => {
         console.log('Conexão com o banco de dados estabelecida com sucesso.');
 
         await db.sequelize.sync({ alter: true });
-        console.log('Modelos sincronizados com o banco de dados. Colunas faltantes (userId, eventoId) devem ter sido criadas.');
     } catch (error) {
         console.error('Erro ao conectar/sincronizar com o banco de dados:', error);
     }
